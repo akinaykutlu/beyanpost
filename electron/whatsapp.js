@@ -35,7 +35,6 @@ function clearSession() {
 
 async function init(mainWindow) {
   try {
-    // ESM modülü dinamik import ile yükle
     const Baileys = await import('@whiskeysockets/baileys')
     const makeWASocket = Baileys.makeWASocket || Baileys.default?.makeWASocket || Baileys.default
     const useMultiFileAuthState = Baileys.useMultiFileAuthState
@@ -101,14 +100,13 @@ async function init(mainWindow) {
         log.warn('Bağlantı kesildi', String(statusCode))
 
         const shouldReconnect = statusCode !== DisconnectReason.loggedOut
-        
+
         if (!shouldReconnect) {
           log.info('Oturum geçersiz (401), temizleniyor')
           clearSession()
           status = 'disconnected'
           mainWindow.webContents.send('whatsapp-disconnected', {})
         } else if (manualClear) {
-          // Kullanıcı manuel temizledi, yeniden bağlanma
           status = 'disconnected'
           mainWindow.webContents.send('whatsapp-disconnected', {})
         } else {
@@ -141,8 +139,11 @@ function destroy() {
 
 function stopSending() { shouldStop = true }
 
-function randomDelay(min = 8000, max = 15000) {
-  return new Promise(r => setTimeout(r, Math.floor(Math.random() * (max - min + 1)) + min))
+// min ve max artık dışarıdan parametrik olarak geliyor (saniye cinsinden)
+function randomDelay(minSec = 8, maxSec = 15) {
+  const minMs = minSec * 1000
+  const maxMs = maxSec * 1000
+  return new Promise(r => setTimeout(r, Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs))
 }
 
 function formatPhone(phone) {
@@ -152,7 +153,8 @@ function formatPhone(phone) {
   return p + '@s.whatsapp.net'
 }
 
-async function startSending(items, folderPath, mainWindow) {
+// delayMin ve delayMax: saniye cinsinden (varsayılan 8-15)
+async function startSending(items, folderPath, mainWindow, delayMin = 8, delayMax = 15) {
   if (status !== 'ready') {
     mainWindow.webContents.send('send-complete', { error: 'WhatsApp bağlı değil' })
     return
@@ -214,7 +216,7 @@ async function startSending(items, folderPath, mainWindow) {
     }
 
     if (i < items.length - 1 && !shouldStop) {
-      await randomDelay(8000, 15000)
+      await randomDelay(delayMin, delayMax)
     }
   }
 

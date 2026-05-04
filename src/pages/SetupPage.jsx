@@ -1,28 +1,15 @@
 import React, { useState, useEffect } from 'react'
 
-const DEFAULT_CAPTION = 'Sayın {firma},\nAylık beyannameniz ektedir.\n\nBu mesaj BeyanPost tarafından otomatik gönderilmiştir.'
-
 export default function SetupPage({ waStatus, setWaStatus }) {
-  const [qrUrl, setQrUrl] = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [qrUrl, setQrUrl]         = useState(null)
+  const [loading, setLoading]     = useState(false)
   const [statusMsg, setStatusMsg] = useState('')
-  const [caption, setCaption] = useState(DEFAULT_CAPTION)
-  const [captionSaved, setCaptionSaved] = useState(false)
 
   useEffect(() => {
-    window.api.getSettings().then(res => {
-      if (res.success && res.settings?.whatsappCaption) {
-        setCaption(res.settings.whatsappCaption)
-      }
-    })
     window.api.on('qr-code', (url) => {
       setQrUrl(url); setWaStatus('qr'); setLoading(false); setStatusMsg('')
     })
-    window.api.on('whatsapp-status-update', (data) => {
-      setStatusMsg(data.message)
-      // QR okutulduktan sonra mesaj gelir, QR'ı silme
-      // sadece loading ekranındaysa göster
-    })
+    window.api.on('whatsapp-status-update', (data) => { setStatusMsg(data.message) })
     window.api.on('whatsapp-error', (data) => {
       setLoading(false); setQrUrl(null); setStatusMsg('')
       alert('Hata: ' + data.message)
@@ -34,12 +21,6 @@ export default function SetupPage({ waStatus, setWaStatus }) {
     }
   }, [])
 
-  const handleSaveCaption = async () => {
-    await window.api.saveSettings({ whatsappCaption: caption })
-    setCaptionSaved(true)
-    setTimeout(() => setCaptionSaved(false), 2000)
-  }
-
   const handleConnect = async () => {
     setLoading(true); setQrUrl(null); setStatusMsg('')
     await window.api.whatsappInit()
@@ -49,38 +30,62 @@ export default function SetupPage({ waStatus, setWaStatus }) {
     if (!window.confirm('WhatsApp oturumu temizlenecek ve yeniden QR okutmanız gerekecek. Devam edilsin mi?')) return
     await window.api.whatsappClearSession()
     setQrUrl(null); setStatusMsg(''); setWaStatus('disconnected')
-    alert('Oturum temizlendi.')
   }
 
   return (
-    <div style={{ maxWidth: 520 }}>
+    <div>
       <h2 style={{ marginBottom: 4, fontSize: 18 }}>WhatsApp Bağlantısı</h2>
-      <p style={{ color: '#64748b', marginBottom: 20, fontSize: 13 }}>Bağlantı durumu ve gönderim mesajı ayarları.</p>
+      <p style={{ color: '#64748b', marginBottom: 20, fontSize: 13 }}>Bağlantı durumu ve cihaz yönetimi.</p>
+
+      {/* Bilgi notu */}
+      <div style={{
+        background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: 10,
+        padding: '12px 14px', marginBottom: 16, display: 'flex', gap: 10, alignItems: 'flex-start'
+      }}>
+        <span style={{ fontSize: 16, flexShrink: 0 }}>ℹ️</span>
+        <p style={{ fontSize: 12, color: '#1e40af', margin: 0, lineHeight: 1.7 }}>
+          BeyanPost, mesajları <strong>WhatsApp Web protokolü</strong> üzerinden gönderir.
+          Gönderilen mesajların telefonunuzda görünmesi için WhatsApp uygulamasının
+          arka planda <strong>açık ve internete bağlı</strong> olması gerekir.
+          Telefonunuzda "Mesaj bekleniyor" görünüyorsa <strong>Bağlantıyı Yenile</strong> butonunu kullanın.
+        </p>
+      </div>
 
       {/* Bağlantı kartı */}
       {waStatus === 'ready' ? (
-        <div className="card" style={{ textAlign: 'center', padding: 28, marginBottom: 12 }}>
-          <div style={{ fontSize: 44, marginBottom: 10 }}>✅</div>
-          <div style={{ fontSize: 17, fontWeight: 700, color: '#16a34a', marginBottom: 6 }}>Bağlantı Aktif</div>
-          <p style={{ color: '#64748b', fontSize: 13, marginBottom: 16 }}>Beyanname göndermek için sol menüden ilgili sekmeye geçin.</p>
-          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-            <button onClick={handleClearSession} style={{ fontSize: 13, padding: '9px 16px', background: '#fef3c7', color: '#92400e', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 500 }}>
-              🔄 Numara Değiştir
+        <div className="card" style={{ textAlign: 'center', padding: 32, marginBottom: 12 }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>✅</div>
+          <div style={{ fontSize: 17, fontWeight: 700, color: '#16a34a', marginBottom: 8 }}>Bağlantı Aktif</div>
+          <p style={{ color: '#64748b', fontSize: 13, marginBottom: 24 }}>
+            Beyanname göndermek için sol menüden ilgili sekmeye geçin.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <button
+              onClick={handleClearSession}
+              style={{ padding: '10px', background: '#eff6ff', color: '#1d4ed8', border: '1px solid #bfdbfe', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              🔄 Bağlantıyı Yenile
             </button>
-            <button onClick={handleClearSession} className="btn-danger" style={{ fontSize: 13, padding: '9px 16px' }}>
+            <button
+              onClick={handleClearSession}
+              style={{ padding: '10px', background: '#fef3c7', color: '#92400e', border: '1px solid #fde68a', borderRadius: 8, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              📱 Numara Değiştir
+            </button>
+            <button onClick={handleClearSession} className="btn-danger" style={{ padding: '10px', fontSize: 13 }}>
               🚪 Çıkış Yap
             </button>
           </div>
         </div>
       ) : (
-        <div className="card" style={{ textAlign: 'center', padding: 28, marginBottom: 12 }}>
+        <div className="card" style={{ textAlign: 'center', padding: 32, marginBottom: 12 }}>
           {!qrUrl && !loading && !statusMsg && (
             <>
-              <div style={{ fontSize: 44, marginBottom: 10 }}>📱</div>
-              <p style={{ color: '#64748b', marginBottom: 18, fontSize: 13, lineHeight: 1.7 }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>📱</div>
+              <p style={{ color: '#64748b', marginBottom: 20, fontSize: 13, lineHeight: 1.7 }}>
                 WhatsApp → Bağlı Cihazlar → Cihaz Bağla adımlarını izleyin.
               </p>
-              <button className="btn-primary" onClick={handleConnect} style={{ width: '100%', padding: '12px' }}>
+              <button className="btn-primary" onClick={handleConnect} style={{ width: '100%', padding: '12px', fontSize: 14 }}>
                 QR Kod Oluştur
               </button>
             </>
@@ -115,44 +120,15 @@ export default function SetupPage({ waStatus, setWaStatus }) {
         </div>
       )}
 
-      {/* Mesaj şablonu */}
-      <div className="card" style={{ marginBottom: 12 }}>
-        <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>💬 Gönderim Mesajı</div>
-        <p style={{ fontSize: 12, color: '#64748b', marginBottom: 10, lineHeight: 1.6 }}>
-          Beyanname ile birlikte gönderilecek mesaj.{' '}
-          <code style={{ background: '#f1f5f9', padding: '1px 5px', borderRadius: 4 }}>{'{firma}'}</code>{' '}
-          otomatik firma adına dönüşür.
-        </p>
-        <textarea
-          value={caption}
-          onChange={e => setCaption(e.target.value)}
-          rows={4}
-          style={{
-            width: '100%', padding: '10px 12px', fontSize: 13,
-            border: '2px solid #e2e8f0', borderRadius: 8, outline: 'none',
-            resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.6,
-            boxSizing: 'border-box', marginBottom: 8
-          }}
-        />
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-          <button className="btn-primary" onClick={handleSaveCaption} style={{ fontSize: 13, padding: '9px 18px' }}>
-            💾 Kaydet
-          </button>
-          <button className="btn-secondary" onClick={() => setCaption(DEFAULT_CAPTION)} style={{ fontSize: 13, padding: '9px 14px' }}>
-            Varsayılana Sıfırla
-          </button>
-          {captionSaved && <span style={{ fontSize: 13, color: '#16a34a' }}>✅ Kaydedildi</span>}
-        </div>
-      </div>
-
-      {/* Sorun giderme */}
-      <div className="card" style={{ padding: 14 }}>
+      {/* Bağlantı sorunu */}
+      <div className="card" style={{ padding: 16 }}>
         <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 6 }}>🔧 Bağlantı Sorunu?</div>
-        <p style={{ fontSize: 13, color: '#64748b', marginBottom: 10, lineHeight: 1.6 }}>
-          QR okutulmuyor veya bağlantı kurulamıyorsa oturumu temizleyin.
+        <p style={{ fontSize: 13, color: '#64748b', marginBottom: 12, lineHeight: 1.6 }}>
+          QR okutulmuyor, bağlantı kurulamıyor veya telefonunuzda mesajlar "Mesaj bekleniyor"
+          durumunda kalıyorsa oturumu temizleyip yeniden bağlanın.
         </p>
-        <button className="btn-danger" onClick={handleClearSession} style={{ fontSize: 13, padding: '8px 14px' }}>
-          🗑️ Oturumu Temizle
+        <button className="btn-danger" onClick={handleClearSession} style={{ fontSize: 13, padding: '9px 16px' }}>
+          🗑️ Oturumu Temizle & Yeniden Bağlan
         </button>
       </div>
     </div>

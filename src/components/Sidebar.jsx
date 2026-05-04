@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 
 const NAV = [
-  { id: 'setup',  label: 'WhatsApp Bağlantı', icon: '📱' },
-  { id: 'gonder', label: 'Beyanname Gönder',  icon: '📤' },
-  { id: 'rapor',  label: 'Raporlar',           icon: '📊' },
+  { id: 'setup',    label: 'WhatsApp Bağlantı', icon: '📱' },
+  { id: 'gonder',   label: 'Beyanname Gönder',  icon: '📤' },
+  { id: 'rapor',    label: 'Raporlar',           icon: '📊' },
+  { id: 'ayarlar',  label: 'Ayarlar',            icon: '⚙️' },
 ]
 
 export default function Sidebar({ page, setPage, waStatus, waPhone, licenseInfo }) {
@@ -24,7 +25,10 @@ export default function Sidebar({ page, setPage, waStatus, waPhone, licenseInfo 
         color: 'white',
         display: 'flex',
         flexDirection: 'column',
-        padding: '20px 0'
+        padding: '20px 0',
+        height: '100vh',
+        boxSizing: 'border-box',
+        flexShrink: 0
       }}>
         {/* Logo */}
         <div style={{ padding: '0 20px 24px', borderBottom: '1px solid #2d2d4e' }}>
@@ -33,7 +37,7 @@ export default function Sidebar({ page, setPage, waStatus, waPhone, licenseInfo 
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: '16px 12px' }}>
+        <nav style={{ flex: 1, padding: '16px 12px', overflowY: 'auto' }}>
           {NAV.map(item => (
             <button
               key={item.id}
@@ -84,18 +88,17 @@ export default function Sidebar({ page, setPage, waStatus, waPhone, licenseInfo 
             <div style={{ fontSize: 12, color: '#cbd5e1', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {licenseInfo.customerName || licenseInfo.bureauName || 'Müşteri'}
             </div>
-            <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
-              {licenseInfo.plan ? licenseInfo.plan.charAt(0).toUpperCase() + licenseInfo.plan.slice(1) + ' Plan · ' : ''}Detay için tıkla
-            </div>
-            <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
-              Detay için tıkla
-            </div>
+            {licenseInfo.plan && (
+              <div style={{ fontSize: 10, color: '#64748b', marginTop: 2 }}>
+                {licenseInfo.plan.charAt(0).toUpperCase() + licenseInfo.plan.slice(1)} Plan
+              </div>
+            )}
           </div>
         )}
 
         {/* WA Status */}
         <div style={{
-          margin: '0 12px',
+          margin: '0 12px 10px',
           padding: '12px',
           background: '#2d2d4e',
           borderRadius: 8,
@@ -109,9 +112,19 @@ export default function Sidebar({ page, setPage, waStatus, waPhone, licenseInfo 
             }} />
             <span style={{ color: statusColor, fontWeight: 600 }}>{statusLabel}</span>
           </div>
-          {waPhone && (
-            <div style={{ color: '#64748b' }}>+{waPhone}</div>
-          )}
+          {waPhone && <div style={{ color: '#64748b' }}>+{waPhone}</div>}
+        </div>
+
+        {/* İletişim */}
+        <div style={{
+          margin: '0 12px',
+          padding: '10px 12px',
+          borderTop: '1px solid #2d2d4e',
+          paddingTop: 12
+        }}>
+          <div style={{ fontSize: 10, color: '#475569', marginBottom: 3 }}>DESTEK & İLETİŞİM</div>
+          <div style={{ fontSize: 11, color: '#64748b', fontWeight: 600 }}>Akın Aykutlu</div>
+          <div style={{ fontSize: 11, color: '#475569' }}>0545 236 23 10</div>
         </div>
       </aside>
 

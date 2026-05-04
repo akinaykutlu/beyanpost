@@ -88,11 +88,11 @@ app.whenReady().then(async () => {
       })
 
       // Uygulama açılışında 10sn sonra güncelleme kontrol et
-      setTimeout(() => {
-        autoUpdater.checkForUpdates().catch(err => {
-          log.warn('Güncelleme kontrol hatası', err.message)
-        })
-      }, 10000)
+     setTimeout(() => {
+  autoUpdater.checkForUpdates().catch(() => {
+    // Sessiz geç
+  })
+}, 10000)
 
     } catch (err) {
       log.warn('electron-updater yüklenemedi', err.message)
@@ -319,4 +319,18 @@ ipcMain.handle('install-update', async () => {
 // ─── IPC: Uygulama versiyonu ──────────────────────────────────────
 ipcMain.handle('get-app-version', async () => {
   return app.getVersion()
+})
+// ─── IPC: Logları getir ───────────────────────────────────────────
+ipcMain.handle('get-logs', async () => {
+  try {
+    const logDir = path.join(app.getPath('userData'), 'logs')
+    const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+    const logFile = path.join(logDir, `${today}.log`)
+    if (!fs.existsSync(logFile)) return { success: true, logs: [] }
+    const content = fs.readFileSync(logFile, 'utf-8')
+    const logs = content.split('\n').filter(l => l.trim())
+    return { success: true, logs }
+  } catch (err) {
+    return { success: false, logs: [], error: err.message }
+  }
 })

@@ -2,6 +2,13 @@ import React, { useState, useEffect, useRef } from 'react'
 
 const STEPS = ['Dosyaları Seç', 'Eşleştir & Önizle', 'Gönder']
 
+const DELAY_RISKS = [
+  { min: 8,  max: 15,  label: '8–15 sn' },
+  { min: 30, max: 45,  label: '30–45 sn' },
+  { min: 60, max: 90,  label: '60–90 sn' },
+  { min: 120,max: 180, label: '2–3 dk' },
+]
+
 export default function GonderPage({ waStatus }) {
   const [step, setStep] = useState(0)
   const [folderPath, setFolderPath] = useState(null)
@@ -13,6 +20,7 @@ export default function GonderPage({ waStatus }) {
   const [progressLog, setProgressLog] = useState([])
   const [sendComplete, setSendComplete] = useState(false)
   const [finalResults, setFinalResults] = useState([])
+  const [delayIndex, setDelayIndex] = useState(0)
   const logEndRef = useRef(null)
 
   useEffect(() => {
@@ -20,6 +28,7 @@ export default function GonderPage({ waStatus }) {
       if (res.success && res.settings) {
         if (res.settings.lastFolder) setFolderPath(res.settings.lastFolder)
         if (res.settings.lastExcel) setExcelPath(res.settings.lastExcel)
+        if (res.settings.delayIndex !== undefined) setDelayIndex(Number(res.settings.delayIndex))
       }
     })
   }, [])
@@ -112,12 +121,18 @@ export default function GonderPage({ waStatus }) {
   const handleStartSending = async () => {
     if (waStatus !== 'ready') return alert('Önce WhatsApp\'ı bağlayın!')
     const toSend = matchedItems.filter(i => i.hasFiles && i.hasPhone)
+    // Güncel delay ayarını DB'den oku (kullanıcı bu sekmeye geçmeden değiştirmiş olabilir)
+    const settingsRes = await window.api.getSettings()
+    const currentDelayIndex = settingsRes?.settings?.delayIndex !== undefined
+      ? Number(settingsRes.settings.delayIndex)
+      : delayIndex
+    const delay = DELAY_RISKS[currentDelayIndex] || DELAY_RISKS[0]
     setSending(true)
     setSendComplete(false)
     setProgressLog([])
     setProgress({ current: 0, total: toSend.length })
     setStep(2)
-    await window.api.startSending({ items: toSend, folderPath })
+    await window.api.startSending({ items: toSend, folderPath, delayMin: delay.min, delayMax: delay.max })
   }
 
   const handleReset = () => {
@@ -133,8 +148,10 @@ export default function GonderPage({ waStatus }) {
   const th = { padding: '10px 12px', textAlign: 'left', fontWeight: 600, color: '#475569', fontSize: 12 }
   const td = { padding: '9px 12px', fontSize: 13 }
 
+  const activeDelay = DELAY_RISKS[delayIndex] || DELAY_RISKS[0]
+
   return (
-    <div style={{ maxWidth: 740 }}>
+    <div>
       <h2 style={{ marginBottom: 4, fontSize: 18 }}>Beyanname Gönder</h2>
       <p style={{ color: '#64748b', marginBottom: 20, fontSize: 13 }}>PDF klasörü ve mükellef listesini seçin, eşleştirin ve gönderin.</p>
 
@@ -230,9 +247,13 @@ export default function GonderPage({ waStatus }) {
               </table>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap' }}>
             <button className="btn-secondary" onClick={() => setStep(0)}>← Geri</button>
             {waStatus !== 'ready' && <span style={{ fontSize: 13, color: '#ef4444' }}>⚠️ WhatsApp bağlı değil</span>}
+            {/* Aktif delay bilgisi */}
+            <span style={{ fontSize: 12, color: '#64748b', background: '#f1f5f9', padding: '5px 10px', borderRadius: 6 }}>
+              ⏱️ Aralık: <strong>{activeDelay.label}</strong>
+            </span>
             <button className="btn-primary" onClick={handleStartSending} disabled={matchedItems.filter(i => i.hasFiles && i.hasPhone).length === 0 || waStatus !== 'ready'} style={{ padding: '10px 24px' }}>
               Gönderimi Başlat 🚀
             </button>
@@ -251,7 +272,11 @@ export default function GonderPage({ waStatus }) {
             <div style={{ height: 8, background: '#e2e8f0', borderRadius: 99 }}>
               <div style={{ height: '100%', borderRadius: 99, background: sendComplete ? '#25d366' : '#3b82f6', width: progress.total > 0 ? `${(progress.current / progress.total) * 100}%` : '0%', transition: 'width 0.4s' }} />
             </div>
-            {sending && <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>Spam önlemi: mesajlar arası 8-15sn bekleniyor</p>}
+            {sending && (
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>
+                Spam önlemi: mesajlar arası <strong>{activeDelay.label}</strong> bekleniyor
+              </p>
+            )}
           </div>
 
           <div className="card" style={{ padding: 0, overflow: 'hidden', marginBottom: 14 }}>
