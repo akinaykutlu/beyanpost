@@ -1,0 +1,60 @@
+{
+  "name": "beyanpost",
+  "version": "1.0.0",
+  "description": "Muhasebeci beyanname WhatsApp gönderici",
+  "author": "Akın Aykutlu",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && npx electron .\"",
+    "vite": "vite",
+    "electron": "npx electron .",
+    "build": "vite build",
+    "dist:win": "vite build && npx electron-builder --win"
+  },
+  "build": {
+    "appId": "com.beyanpost.app",
+    "productName": "BeyanPost",
+    "directories": {
+      "output": "dist-electron"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "node_modules/**/*"
+    ],
+    "publish": {
+      "provider": "github",
+      "owner": "akinaykutlu",
+      "repo": "beyanpost",
+      "private": true
+    },
+    "win": {
+      "target": "nsis",
+      "signingHashAlgorithms": [],
+      "sign": null
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys#v6.6.0",
+    "electron-updater": "^6.1.7",
+    "node-fetch": "^2.7.0",
+    "qrcode": "^1.5.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "sql.js": "^1.12.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.3",
+    "vite": "^5.1.0",
+    "wait-on": "^7.2.0"
+  }
+}
