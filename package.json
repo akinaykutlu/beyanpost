@@ -1,6 +1,6 @@
 {
   "name": "beyanpost",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "description": "Muhasebeci beyanname WhatsApp gönderici",
   "author": "Akın Aykutlu",
   "main": "electron/main.js",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@hapi/boom": "^10.0.1",
-    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys#v6.6.0",
+    "@whiskeysockets/baileys": "github:WhiskeySockets/Baileys#v6.5.0",
     "electron-updater": "^6.1.7",
     "node-fetch": "^2.7.0",
     "qrcode": "^1.5.3",
